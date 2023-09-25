@@ -12,6 +12,7 @@ import javax.inject.Singleton
     modules = [
         MainModule::class,
         NetworkModule::class,
+        UseCaseModule::class,
     ],
 )
 @Singleton

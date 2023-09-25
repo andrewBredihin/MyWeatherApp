@@ -4,15 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,13 +27,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -71,6 +77,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainCompose(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val backgroundImage by viewModel.backgroundImage.collectAsState()
+    val cloud by viewModel.clouds.collectAsState()
 
     Column(
         modifier = Modifier
@@ -80,7 +87,72 @@ fun MainCompose(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 contentScale = ContentScale.FillBounds,
             ),
     ) {
-        WeatherNow(viewModel = viewModel, modifier = modifier)
+        Box {
+            CloudAnimation(cloud)
+            WeatherNow(viewModel = viewModel, modifier = modifier)
+        }
+    }
+}
+
+@Composable
+fun CloudAnimation(clouds: MainViewModel.CloudsEnum) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.toFloat()
+
+    val infiniteTransition = rememberInfiniteTransition(label = "")
+    val cloudOneXOffset by infiniteTransition.animateFloat(
+        initialValue = screenWidth,
+        targetValue = -screenWidth,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 10000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "",
+    )
+    val cloudTwoXOffset by infiniteTransition.animateFloat(
+        initialValue = screenWidth,
+        targetValue = -screenWidth,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 15000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "",
+    )
+    val cloudThreeXOffset by infiniteTransition.animateFloat(
+        initialValue = screenWidth,
+        targetValue = -screenWidth,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 20000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "",
+    )
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        if (clouds.ordinal >= 1) {
+            Image(
+                modifier = Modifier
+                    .offset(x = cloudOneXOffset.dp),
+                painter = painterResource(id = R.drawable.cloud),
+                contentDescription = "",
+            )
+        }
+        if (clouds.ordinal >= 2) {
+            Image(
+                modifier = Modifier
+                    .offset(x = cloudTwoXOffset.dp),
+                painter = painterResource(id = R.drawable.cloud_2),
+                contentDescription = "",
+            )
+        }
+        if (clouds.ordinal >= 3) {
+            Image(
+                modifier = Modifier
+                    .offset(x = cloudThreeXOffset.dp, y = 100.dp),
+                painter = painterResource(id = R.drawable.cloud_3),
+                contentDescription = "",
+            )
+        }
     }
 }
 
@@ -110,7 +182,7 @@ fun WeatherNow(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         // Time text
         Text(
             text = time,
-            fontSize = 30.sp,
+            fontSize = 40.sp,
             color = Color.White,
             modifier = modifier
                 .constrainAs(ref = timeRef) {
@@ -139,7 +211,7 @@ fun WeatherNow(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         // City
         Text(
             text = city,
-            fontSize = 30.sp,
+            fontSize = 40.sp,
             color = Color.White,
             modifier = modifier
                 .padding(top = 80.dp)
@@ -153,7 +225,7 @@ fun WeatherNow(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         // Temp
         Text(
             text = temp,
-            fontSize = 40.sp,
+            fontSize = 80.sp,
             color = Color.White,
             modifier = modifier
                 .constrainAs(tempRef) {
@@ -166,6 +238,7 @@ fun WeatherNow(viewModel: MainViewModel, modifier: Modifier = Modifier) {
         // Condition
         Text(
             text = condition,
+            textAlign = TextAlign.Center,
             fontSize = 30.sp,
             color = Color.White,
             modifier = modifier
@@ -205,62 +278,6 @@ fun WeatherNow(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                     top.linkTo(windIconRef.top)
                     bottom.linkTo(windIconRef.bottom)
                 },
-        )
-    }
-}
-
-@Composable
-fun Greeting(viewModel: MainViewModel, modifier: Modifier = Modifier) {
-    val temp by viewModel.temp.collectAsState()
-    val city by viewModel.city.collectAsState()
-    val backgroundImage by viewModel.backgroundImage.collectAsState()
-    val time by viewModel.time.collectAsState()
-
-    val imageSize = 50.dp
-
-    Box(
-        modifier = Modifier.paint(
-            painter = BitmapPainter(image = backgroundImage),
-            contentScale = ContentScale.FillBounds,
-        ),
-    ) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.3f),
-        ) {
-            Text(
-                text = city,
-                fontSize = 30.sp,
-                color = Color.White,
-                modifier = modifier,
-            )
-            Text(
-                text = temp,
-                fontSize = 40.sp,
-                color = Color.White,
-                modifier = modifier,
-            )
-        }
-        Text(
-            text = time,
-            fontSize = 30.sp,
-            color = Color.White,
-            modifier = modifier,
-        )
-        Image(
-            painter = painterResource(id = R.drawable.update),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .width(imageSize)
-                .height(imageSize)
-                .align(alignment = Alignment.TopEnd)
-                .clickable {
-                    viewModel.updateWeather()
-                },
-            contentDescription = "reloadWeather",
         )
     }
 }

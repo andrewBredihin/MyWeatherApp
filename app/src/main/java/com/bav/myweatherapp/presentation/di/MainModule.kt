@@ -1,10 +1,10 @@
 package com.bav.myweatherapp.presentation.di
 
 import android.content.Context
+import com.bav.myweatherapp.domain.usecase.GetWeatherNowUseCase
 import com.bav.myweatherapp.presentation.ui.MainVMFactory
 import dagger.Module
 import dagger.Provides
-import retrofit2.Retrofit
 
 @Module
 class MainModule {
@@ -12,11 +12,11 @@ class MainModule {
     @Provides
     fun provideMainVMFactory(
         context: Context,
-        retrofit: Retrofit,
+        getWeatherNowUseCase: GetWeatherNowUseCase,
     ): MainVMFactory {
         return MainVMFactory(
             context = context,
-            retrofit = retrofit,
+            getWeatherNowUseCase = getWeatherNowUseCase,
         )
     }
 }
