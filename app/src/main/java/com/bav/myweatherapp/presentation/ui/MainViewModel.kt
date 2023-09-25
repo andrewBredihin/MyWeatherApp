@@ -1,4 +1,4 @@
-package com.bav.myweatherapp
+package com.bav.myweatherapp.presentation.ui
 
 import android.content.Context
 import android.graphics.BitmapFactory
@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bav.myweatherapp.R
 import com.bav.myweatherapp.data.retrofit.GetData
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
+import java.lang.Math.floor
 
 class MainViewModel(
     private val retrofit: Retrofit,
@@ -29,13 +31,22 @@ class MainViewModel(
     private val _time = MutableStateFlow("")
     val time = _time.asStateFlow()
 
-    private val _image = MutableStateFlow(
+    private val _wind = MutableStateFlow("")
+    val wind = _wind.asStateFlow()
+
+    private val _backgroundImage = MutableStateFlow(
         BitmapFactory.decodeResource(
             context.resources,
             R.drawable.placeholder,
         ).asImageBitmap(),
     )
-    val image = _image.asStateFlow()
+    val backgroundImage = _backgroundImage.asStateFlow()
+
+    private val _condition = MutableStateFlow("")
+    val condition = _condition.asStateFlow()
+
+    private val _rain = MutableStateFlow(PrecipitationEnum.MIN)
+    val rain = _rain.asStateFlow()
 
     init {
         updateWeather()
@@ -44,11 +55,21 @@ class MainViewModel(
     fun updateWeather() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val weather = retrofit.create(GetData::class.java).getWeather("Samara", "ru")
+                val weather = retrofit.create(GetData::class.java).getWeather("Самара", "ru")
                 withContext(Dispatchers.Main) {
                     _temp.value = "${weather.current.tempC} \u2103"
                     _city.value = weather.location.name
                     _time.value = weather.location.localtime.split(" ")[1]
+                    _condition.value = weather.current.condition.text
+
+                    val wind = kotlin.math.floor(weather.current.wind / 3.6 * 10.0) / 10.0
+                    _wind.value = "$wind м/с"
+
+                    _rain.value = when ((weather.current.precipitation * 10).toInt()) {
+                        in 0..9 -> PrecipitationEnum.MIN
+                        in 10..29 -> PrecipitationEnum.MEDIUM
+                        else -> PrecipitationEnum.MAX
+                    }
 
                     val path = when (weather.current.cloud) {
                         in 0..25 -> CLOUD_ZERO
@@ -74,19 +95,25 @@ class MainViewModel(
                 .asImageBitmap()
 
             withContext(Dispatchers.Main) {
-                _image.value = bitmap
+                _backgroundImage.value = bitmap
             }
         }
     }
 
     companion object {
         const val CLOUD_ZERO =
-            "https://cloud.pulse19.ru/uploads/2021/04/foto-pixabay.com_-3-2048x1365.jpg"
+            "https://img.freepik.com/premium-photo/blue-sky-with-light-white-clouds-perfect-vertical-background-with-large-copy-space_483040-1474.jpg"
         const val CLOUD_MIN =
-            "https://get.pxhere.com/photo/horizon-light-cloud-sky-sun-sunlight-ray-atmosphere-summer-daytime-tranquility-flight-peace-cumulus-italy-blue-blue-sky-clouds-relaxation-hot-serenity-rays-of-sunshine-the-form-of-clouds-meteorological-phenomenon-atmosphere-of-earth-708918.jpg"
+            "https://img.freepik.com/premium-photo/blue-sky-with-white-clouds-vertical-background-with-space-ror-your-own-text_483040-156.jpg"
         const val CLOUD_MEDIUM =
-            "https://wpsovet.ru/wp-content/uploads/a/9/f/a9ffb2d81358da630d7d9ff2c50fba70.jpeg"
+            "https://img.freepik.com/premium-photo/day-sky-with-clouds-vertical-photo_182793-602.jpg?"
         const val CLOUD_MAX =
-            "https://get.pxhere.com/photo/nature-horizon-light-cloud-sky-sunlight-cloudy-time-atmosphere-daytime-cumulus-blue-clouds-meteorological-phenomenon-atmosphere-of-earth-1073715.jpg"
+            "https://img.freepik.com/premium-photo/sky-with-clouds-may-be-used-as-background-vertical_483040-4941.jpg"
+    }
+
+    enum class PrecipitationEnum {
+        MIN,
+        MEDIUM,
+        MAX,
     }
 }

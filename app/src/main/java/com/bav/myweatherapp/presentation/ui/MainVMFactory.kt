@@ -1,4 +1,4 @@
-package com.bav.myweatherapp
+package com.bav.myweatherapp.presentation.ui
 
 import android.content.Context
 import androidx.lifecycle.ViewModel

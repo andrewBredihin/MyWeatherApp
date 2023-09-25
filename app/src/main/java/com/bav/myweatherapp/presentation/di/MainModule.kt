@@ -1,7 +1,7 @@
 package com.bav.myweatherapp.presentation.di
 
 import android.content.Context
-import com.bav.myweatherapp.MainVMFactory
+import com.bav.myweatherapp.presentation.ui.MainVMFactory
 import dagger.Module
 import dagger.Provides
 import retrofit2.Retrofit

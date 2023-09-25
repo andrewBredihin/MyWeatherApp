@@ -1,9 +1,9 @@
 package com.bav.myweatherapp.di
 
 import android.content.Context
-import com.bav.myweatherapp.MainActivity
 import com.bav.myweatherapp.data.di.NetworkModule
 import com.bav.myweatherapp.presentation.di.MainModule
+import com.bav.myweatherapp.presentation.ui.MainActivity
 import dagger.BindsInstance
 import dagger.Component
 import javax.inject.Singleton
