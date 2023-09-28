@@ -8,4 +8,8 @@ class WeatherRepositoryImpl(private val storage: WeatherStorage) : WeatherReposi
     override suspend fun getWeatherNow(city: String, lang: String): Weather {
         return storage.get(city = city, lang = lang)
     }
+
+    override suspend fun getWeatherWeek(city: String, lang: String, days: Int): Weather {
+        return storage.getWeek(city = city, lang = lang, days = days)
+    }
 }

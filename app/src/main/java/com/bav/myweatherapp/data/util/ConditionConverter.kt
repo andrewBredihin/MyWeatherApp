@@ -8,6 +8,7 @@ class ConditionConverter : ModelsConverter<Condition, ConditionDomain> {
     override fun entityToModel(entity: Condition): ConditionDomain {
         return ConditionDomain(
             text = entity.text,
+            icon = entity.icon,
             code = entity.code,
         )
     }

@@ -5,4 +5,6 @@ import com.bav.myweatherapp.domain.models.Weather
 interface WeatherRepository {
 
     suspend fun getWeatherNow(city: String, lang: String): Weather
+
+    suspend fun getWeatherWeek(city: String, lang: String, days: Int): Weather
 }

@@ -1,4 +1,4 @@
-package com.bav.myweatherapp.data.di
+package com.bav.myweatherapp.di
 
 import com.bav.myweatherapp.data.repository.WeatherRepositoryImpl
 import com.bav.myweatherapp.data.storage.WeatherStorage

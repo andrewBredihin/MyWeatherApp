@@ -15,6 +15,7 @@ class WeatherStorageTest : WeatherStorage {
         val condition = Condition(
             text = "Облачно",
             code = 1114,
+            icon = "test",
         )
         val current = Current(
             tempC = "20",
@@ -27,5 +28,9 @@ class WeatherStorageTest : WeatherStorage {
             location = location,
             current = current,
         )
+    }
+
+    override suspend fun getWeek(city: String, lang: String, days: Int): Weather {
+        TODO("Not yet implemented")
     }
 }

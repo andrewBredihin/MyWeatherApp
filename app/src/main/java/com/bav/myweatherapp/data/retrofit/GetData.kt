@@ -9,5 +9,15 @@ const val API_KEY = "95f22bbb6280437ca1d72511232409"
 interface GetData {
 
     @GET("current.json?key=$API_KEY")
-    suspend fun getWeather(@Query("q") city: String, @Query("lang") lang: String): Weather
+    suspend fun getWeather(
+        @Query("q") city: String,
+        @Query("lang") lang: String,
+    ): Weather
+
+    @GET("forecast.json?key=$API_KEY")
+    suspend fun getWeatherWeek(
+        @Query("q") city: String,
+        @Query("lang") lang: String,
+        @Query("days") days: Int,
+    ): Weather
 }

@@ -1,5 +1,6 @@
-package com.bav.myweatherapp.data.di
+package com.bav.myweatherapp.di
 
+import com.bav.myweatherapp.data.retrofit.GetData
 import com.bav.myweatherapp.data.storage.WeatherStorage
 import com.bav.myweatherapp.data.storage.network.WeatherStorageNetwork
 import com.bav.myweatherapp.data.storage.test.WeatherStorageTest
@@ -12,8 +13,8 @@ class StorageModule {
 
     @Provides
     @RepositoryModule.NetworkStorage
-    fun provideWeatherStorageNetwork(retrofit: Retrofit): WeatherStorage {
-        return WeatherStorageNetwork(retrofit = retrofit)
+    fun provideWeatherStorageNetwork(getData: GetData): WeatherStorage {
+        return WeatherStorageNetwork(getData = getData)
     }
 
     @Provides

@@ -1,5 +1,6 @@
-package com.bav.myweatherapp.data.di
+package com.bav.myweatherapp.di
 
+import com.bav.myweatherapp.data.retrofit.GetData
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -45,12 +46,13 @@ class NetworkModule {
         gson: Gson,
         okHttpClient: OkHttpClient,
         @BaseUrl baseUrl: String,
-    ): Retrofit {
+    ): GetData {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .client(okHttpClient)
             .build()
+            .create(GetData::class.java)
     }
 
     @Qualifier

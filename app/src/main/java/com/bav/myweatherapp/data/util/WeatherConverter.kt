@@ -9,6 +9,7 @@ class WeatherConverter : ModelsConverter<Weather, WeatherDomain> {
         return WeatherDomain(
             location = LocationConverter().entityToModel(entity.location),
             current = CurrentConverter().entityToModel(entity.current),
+            forecast = entity.forecast?.let { ForecastConverter().entityToModel(it) },
         )
     }
 }
