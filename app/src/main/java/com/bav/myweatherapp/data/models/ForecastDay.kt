@@ -7,4 +7,6 @@ data class ForecastDay(
     val date: String,
     @SerializedName("day")
     val day: Day,
+    @SerializedName("hour")
+    val hours: List<Hour>,
 )

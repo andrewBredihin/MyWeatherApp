@@ -9,6 +9,9 @@ class ForecastDayConverter : ModelsConverter<ForecastDay, ForecastDayDomain> {
         return ForecastDayDomain(
             date = entity.date,
             day = DayConverter().entityToModel(entity.day),
+            hours = entity.hours.map { hour ->
+                HourConverter().entityToModel(hour)
+            },
         )
     }
 }

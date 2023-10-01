@@ -1,9 +1,11 @@
 package com.bav.myweatherapp.presentation.weather
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -12,6 +14,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,13 +28,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import com.bav.myweatherapp.R
 import com.bav.myweatherapp.app.App
+import com.bav.myweatherapp.presentation.theme.BluePrimary
 import com.bav.myweatherapp.presentation.theme.MyWeatherAppTheme
 import com.bav.myweatherapp.presentation.theme.blur
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -67,6 +81,8 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var mainVMFactory: MainVMFactory
 
+    @OptIn(ExperimentalMaterial3Api::class)
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -79,10 +95,39 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    MainCompose(
-                        viewModel = viewModel,
-                        modifier = Modifier,
-                    )
+                    Scaffold(
+                        topBar = {
+                            var city by remember { mutableStateOf(value = "Самара") }
+                            TopAppBar(
+                                colors = TopAppBarDefaults.smallTopAppBarColors(
+                                    containerColor = BluePrimary,
+                                    titleContentColor = Color.White,
+                                ),
+                                title = {
+                                    TextField(
+                                        value = city,
+                                        onValueChange = { newText ->
+                                            city = newText
+                                            viewModel.setCity(newText)
+                                        },
+                                        textStyle = androidx.compose.ui.text.TextStyle(
+                                            fontSize = 30.sp,
+                                        ),
+                                        colors = TextFieldDefaults.textFieldColors(
+                                            textColor = Color.White,
+                                            containerColor = Color.Transparent,
+                                        ),
+                                        singleLine = true,
+                                    )
+                                },
+                            )
+                        },
+                    ) {
+                        MainCompose(
+                            viewModel = viewModel,
+                            modifier = Modifier.padding(top = 64.dp),
+                        )
+                    }
                 }
             }
         }
@@ -93,20 +138,29 @@ class MainActivity : ComponentActivity() {
 fun MainCompose(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val backgroundImage by viewModel.backgroundImage.collectAsState()
     val cloud by viewModel.clouds.collectAsState()
+    var showDayWeather by remember { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .fillMaxSize()
             .paint(
                 painter = BitmapPainter(image = backgroundImage),
                 contentScale = ContentScale.FillBounds,
-            ),
+            )
+            .verticalScroll(rememberScrollState()),
     ) {
-        Box {
+        Box(
+            modifier = Modifier.clickable {
+                showDayWeather = !showDayWeather
+            },
+        ) {
             CloudAnimation(cloud)
-            WeatherNow(viewModel = viewModel, modifier = modifier)
+            WeatherNow(viewModel = viewModel)
         }
-        WeatherWeek(viewModel = viewModel, modifier = modifier)
+        AnimatedVisibility(visible = showDayWeather) {
+            WeatherDay(viewModel = viewModel)
+        }
+        WeatherWeek(viewModel = viewModel)
     }
 }
 
@@ -309,13 +363,94 @@ fun WeatherNow(viewModel: MainViewModel, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
+fun WeatherDay(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+    val day by viewModel.day.collectAsState()
+    val imageSize = 64.dp
+
+    LazyRow(
+        modifier = modifier
+            .padding(top = 40.dp)
+            .fillMaxSize(),
+        horizontalArrangement = Arrangement.SpaceAround,
+    ) {
+        items(day) { hour ->
+            val path = "https:${hour.condition.icon}"
+            Box(
+                modifier = modifier.clip(shape = RoundedCornerShape(30.dp)),
+            ) {
+                Column(
+                    modifier = modifier
+                        .padding(horizontal = 10.dp)
+                        .background(color = blur),
+                ) {
+                    // Condition
+                    GlideImage(
+                        model = path,
+                        contentDescription = "condition",
+                        modifier = Modifier
+                            .size(imageSize)
+                            .align(alignment = Alignment.CenterHorizontally),
+                    )
+
+                    // Date
+                    val time = hour.time.split(" ")[1]
+                    Text(
+                        text = time,
+                        fontSize = 20.sp,
+                        color = Color.White,
+                        modifier = modifier
+                            .align(alignment = Alignment.CenterHorizontally)
+                            .padding(horizontal = 10.dp),
+                    )
+
+                    // Average Temp
+                    Text(
+                        text = "${hour.temp}℃",
+                        fontSize = 30.sp,
+                        color = Color.White,
+                        modifier = modifier
+                            .padding(top = 10.dp)
+                            .align(alignment = Alignment.CenterHorizontally),
+                    )
+
+                    // Wind
+                    Row(
+                        modifier = Modifier
+                            .padding(10.dp),
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.wind),
+                            contentScale = ContentScale.Crop,
+                            contentDescription = "reloadWeather",
+                            modifier = Modifier
+                                .size(imageSize / 2),
+                        )
+
+                        // Wind
+                        Text(
+                            text = "${String.format("%.1f", hour.wind / 3.6)} м/с",
+                            fontSize = 20.sp,
+                            color = Color.White,
+                            modifier = modifier
+                                .padding(start = 10.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
 fun WeatherWeek(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val week by viewModel.week.collectAsState()
     val imageSize = 64.dp
 
     LazyRow(
         modifier = modifier
-            .padding(vertical = 40.dp),
+            .padding(vertical = 40.dp)
+            .fillMaxSize(),
         horizontalArrangement = Arrangement.SpaceAround,
     ) {
         items(week) { forecastDay ->

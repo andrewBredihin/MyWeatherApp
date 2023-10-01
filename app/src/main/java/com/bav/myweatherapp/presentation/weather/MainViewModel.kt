@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bav.myweatherapp.R
 import com.bav.myweatherapp.domain.models.ForecastDay
+import com.bav.myweatherapp.domain.models.Hour
 import com.bav.myweatherapp.domain.usecase.GetWeatherNowUseCase
 import com.bav.myweatherapp.domain.usecase.GetWeatherWeekUseCase
 import com.bumptech.glide.Glide
@@ -58,35 +59,40 @@ class MainViewModel(
     private val _week = MutableStateFlow<List<ForecastDay>>(emptyList())
     val week = _week.asStateFlow()
 
+    // Погода на день
+    private val _day = MutableStateFlow<List<Hour>>(emptyList())
+    val day = _day.asStateFlow()
+
     private val _state = MutableStateFlow(false)
     val state = _state.asStateFlow()
+
+    private var weatherOnCity = "Самара"
 
     init {
         updateWeather()
     }
 
-    fun updateWeather() {
+    fun setCity(city: String) {
+        weatherOnCity = city
+        updateWeather()
+    }
+
+    private fun updateWeather() {
         viewModelScope.launch(Dispatchers.IO) {
-            while (true) {
-                _state.value = true
-                updateWeatherNow()
-                delay(1000)
-                _state.value = false
-                delay(DELAY)
-            }
+            _state.value = true
+            updateWeatherNow()
+            delay(1000)
+            _state.value = false
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            while (true) {
-                updateWeatherWeek()
-                delay(DELAY)
-            }
+            updateWeatherWeek()
         }
     }
 
     private suspend fun updateWeatherNow() {
         try {
-            val weather = getWeatherNowUseCase.execute(city = "Самара", lang = "ru")
+            val weather = getWeatherNowUseCase.execute(city = weatherOnCity, lang = "ru")
             withContext(Dispatchers.Main) {
                 _temp.value = "${weather.current.tempC} \u2103"
                 _city.value = weather.location.name
@@ -97,8 +103,8 @@ class MainViewModel(
                 _wind.value = "$wind м/с"
 
                 _clouds.value = when (weather.current.cloud) {
-                    in 0..25 -> CloudsEnum.ZERO
-                    in 26..50 -> CloudsEnum.MIN
+                    in 0..20 -> CloudsEnum.ZERO
+                    in 21..50 -> CloudsEnum.MIN
                     in 51..75 -> CloudsEnum.MEDIUM
                     else -> CloudsEnum.MAX
                 }
@@ -138,9 +144,11 @@ class MainViewModel(
 
     private suspend fun updateWeatherWeek() {
         try {
-            val forecast = getWeatherWeekUseCase.execute(city = "Самара", lang = "ru", days = 7)
+            val forecast =
+                getWeatherWeekUseCase.execute(city = weatherOnCity, lang = "ru", days = 7)
             withContext(Dispatchers.Main) {
                 _week.value = forecast.forecast?.forecastDay.orEmpty()
+                _day.value = forecast.forecast?.forecastDay?.get(0)?.hours.orEmpty()
             }
         } catch (e: Exception) {
             Log.e("MyTag", e.message.toString())
@@ -169,12 +177,8 @@ class MainViewModel(
     }
 
     companion object {
-        const val DELAY = 15000L
-
         const val CLEAR_SKY =
             "https://img.freepik.com/premium-photo/blue-sky-with-light-white-clouds-perfect-vertical-background-with-large-copy-space_483040-1474.jpg"
-        const val CLEAR_SKY_WINTER =
-            "https://images.wallpaperscraft.ru/image/single/moroz_uzory_inej_9685_225x300.jpg"
         const val RAIN =
             "https://img2.akspic.ru/previews/5/8/4/8/4/148485/148485-voda-dozhd-sinij-nebo-surface-x750.jpg"
         const val SHOWER =
